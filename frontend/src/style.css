@@ -1,0 +1,76 @@
+:root { color-scheme: light; --ink: #2d4055; --muted: #748193; --line: #e4e9ef; --soft: #f3f5f7; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: white; font: 14px/1.6 system-ui, sans-serif; }
+a { color: #355e87; text-decoration: none; }
+a:hover { text-decoration: underline; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button, select { cursor: pointer; }
+button { border: 1px solid var(--line); border-radius: 5px; background: white; padding: 6px 10px; }
+button:hover { background: var(--soft); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+:focus-visible { outline: 2px solid #88a9c8; outline-offset: 2px; }
+h1, h2, h3, p { margin: 0 0 12px; }
+h1 { font-size: 2rem; letter-spacing: -.03em; }
+h2 { font-size: 1rem; }
+h3 { font-size: .85rem; }
+small, time, [role="status"] { color: var(--muted); font-size: .8rem; }
+p:empty, .error:empty { display: none; }
+.comments-page { width: min(980px, calc(100% - 32px)); margin: 36px auto 60px; }
+.heading, .toolbar, .pagination, .buttons { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.heading { margin-bottom: 20px; }
+.heading h1, .heading h2 { margin: 0; }
+.panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.toolbar, .pagination { padding: 16px; font-size: .8rem; }
+.toolbar form, .format-toolbar, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+select { max-width: 100%; padding: 6px; background: white; border: 1px solid var(--line); border-radius: 5px; }
+.comments-table-wrap { overflow-x: auto; }
+table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+th, td { padding: 10px 14px; text-align: left; overflow-wrap: anywhere; vertical-align: top; }
+thead, .comments-table__metadata { font-size: .75rem; color: var(--muted); border-top: 1px solid var(--line); }
+thead { background: #fafbfc; }
+.thread { display: grid; gap: 8px; }
+/* Limit visible indentation while preserving every reply and its parent link. */
+.comment { min-width: 0; overflow: hidden; margin-inline-start: min(calc(var(--depth, 0) * 20px), 160px); border: 1px solid var(--line); border-radius: 8px; }
+.comment:target { outline: 2px solid #88a9c8; }
+.comment__header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--soft); }
+.avatar { border-radius: 50%; object-fit: cover; }
+.identity { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; overflow-wrap: anywhere; }
+[data-username] { font-weight: 700; }
+.actions { display: flex; align-items: center; gap: 5px; margin-left: auto; color: var(--muted); font-size: .8rem; }
+.actions button { padding: 2px 6px; border: 0; background: transparent; }
+.parent { display: inline-block; margin: 6px 12px 0; font-size: .75rem; }
+blockquote { margin: 10px 12px 0; padding: 5px 10px; border-left: 2px solid #a8bcd0; background: #f8fafc; font-size: .8rem; }
+.quote-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.comment__text { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+code { background: var(--soft); border-radius: 3px; padding: 2px 4px; }
+.attachment { display: block; margin: 0 12px 12px; overflow-wrap: anywhere; }
+.attachment img, dialog img { display: block; max-width: min(100%, 320px); max-height: 240px; object-fit: contain; }
+.empty { padding: 28px; text-align: center; color: var(--muted); }
+.pagination { justify-content: center; border-top: 1px solid var(--line); }
+.composer { margin-top: 24px; padding: 20px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.fields label:last-child { grid-column: 1 / -1; }
+label { display: block; font-size: .85rem; }
+.composer input:not([type="hidden"]), textarea { display: block; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 5px; margin: 5px 0; }
+textarea { resize: vertical; }
+.format-toolbar { margin: 6px 0; }
+.link-fields { padding: 10px; border: 1px solid var(--line); }
+.error { color: #a13d44; font-size: .8rem; }
+.captcha, .buttons { margin-top: 16px; }
+.buttons { justify-content: start; }
+.primary { background: #355e87; color: white; }
+#comment-preview { border-top: 1px dashed var(--line); margin-top: 18px; padding-top: 12px; }
+dialog { width: min(720px, calc(100% - 24px)); max-height: 85vh; border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+dialog[open], #comment-preview { animation: appear .2s ease-out; }
+dialog::backdrop { background: #18253688; backdrop-filter: blur(3px); }
+dialog img { margin: auto; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+@keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  .comments-page { width: calc(100% - 24px); margin-top: 24px; }
+  th, td { padding: 8px 6px; font-size: .7rem; }
+  .comment { margin-inline-start: min(calc(var(--depth, 0) * 12px), 48px); }
+  .composer { padding: 14px; }
+  .fields { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
