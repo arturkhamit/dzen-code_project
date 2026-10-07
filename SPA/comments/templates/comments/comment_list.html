@@ -1,0 +1,20 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discussion</title>
+  <link rel="stylesheet" href="{% static 'comments/dist/comments.css' %}">
+</head>
+<body>
+  {{ page_data|json_script:"comments-data" }}
+  <div id="comments-app" data-list-url="{{ list_url }}" data-create-url="{{ form_action }}"
+       data-site-key="{{ recaptcha_site_key }}" data-csrf-token="{{ csrf_token }}" data-sort="{{ sort|default:'newest' }}"></div>
+  <noscript>Please enable JavaScript to join the discussion.</noscript>
+  {% if recaptcha_site_key %}
+  <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key|urlencode }}" async defer></script>
+  {% endif %}
+  <script type="module" src="{% static 'comments/dist/comments.js' %}"></script>
+</body>
+</html>
