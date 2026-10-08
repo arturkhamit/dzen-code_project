@@ -54,9 +54,12 @@ label { display: block; font-size: .85rem; }
 .composer input:not([type="hidden"]), textarea { display: block; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 5px; margin: 5px 0; }
 textarea { resize: vertical; }
 .format-toolbar { margin: 6px 0; }
+.format-toolbar [aria-pressed="true"] { background: #e5eef7; border-color: #88a9c8; }
+.message-editor { min-height: 140px; padding: 8px; border: 1px solid var(--line); border-radius: 5px; margin: 5px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.message-editor p { margin: 0; }
 .link-fields { padding: 10px; border: 1px solid var(--line); }
 .error { color: #a13d44; font-size: .8rem; }
-.captcha, .buttons { margin-top: 16px; }
+.buttons { margin-top: 16px; }
 .buttons { justify-content: start; }
 .primary { background: #355e87; color: white; }
 #comment-preview { border-top: 1px dashed var(--line); margin-top: 18px; padding-top: 12px; }
