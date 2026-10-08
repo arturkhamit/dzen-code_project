@@ -1,9 +1,14 @@
 from django.core.exceptions import ValidationError
 
 from comments.models import Comment
+from comments.validators.entities import validate_entities
 
 
 def validate_comment(comment):
+    try:
+        comment.entities = validate_entities(comment.text, comment.entities)
+    except ValidationError as error:
+        raise ValidationError({"text": error.messages}) from error
     # Built-in validation handles declared fields, uniqueness and DB constraints.
     # These additional rules depend on other rows and belong to the write service.
     comment.full_clean()

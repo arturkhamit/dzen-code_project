@@ -3,7 +3,7 @@ from django.core.validators import RegexValidator, URLValidator
 from django.db import models
 from django.utils import timezone
 
-from comments.validators.markup import MAX_TEXT_LENGTH, validate_comment_text
+from comments.validators.entities import MAX_TEXT_LENGTH, validate_plain_text
 
 
 class Comment(models.Model):
@@ -34,7 +34,9 @@ class Comment(models.Model):
     quoted_comment = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="quoted_by",
     )
-    text = models.TextField(max_length=MAX_TEXT_LENGTH, validators=[validate_comment_text])
+    text = models.TextField(max_length=MAX_TEXT_LENGTH, validators=[validate_plain_text])
+    # Plain text and formatting ranges, using Telegram's UTF-16 offset convention.
+    entities = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(default=timezone.now, db_index=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
     # Expose this as read-only in a future serializer. Voting needs an authenticated

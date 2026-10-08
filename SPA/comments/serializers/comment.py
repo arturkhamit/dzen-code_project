@@ -27,7 +27,9 @@ def serialize_comment(comment, *, depth=0):
         "vote_count": comment.vote_count,
         "parent_id": comment.parent_id,
         "depth": depth,
-        "rendered_text": render_comment_text(comment.text),
+        "text": comment.text,
+        "entities": comment.entities,
+        "rendered_text": render_comment_text(comment.text, comment.entities),
         "plain_text": comment_plain_text(comment.text),
         "quoted_comment": {
             "pk": quoted.pk, "username": quoted.username,

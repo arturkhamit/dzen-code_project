@@ -12,3 +12,16 @@ wheels/
 
 # Environment variables
 .env
+
+# Temporary files
+temp/
+
+# Test cache and tests
+tests/*
+.pytest_cache/
+
+# Frontend dependencies (generated dist/ is already ignored above)
+node_modules/
+
+# User uploads
+SPA/media/

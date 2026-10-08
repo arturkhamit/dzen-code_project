@@ -18,10 +18,15 @@ def deserialize_comment(data, files):
     """Read the public input fields; model validation belongs to save_comment."""
     if len(files.getlist("attachment")) > 1:
         raise ValidationError({"attachment": ["Attach only one file."]})
+    try:
+        entities = json.loads(data.get("entities", "[]"))
+    except (ValueError, TypeError, RecursionError):
+        raise ValidationError({"text": ["Enter valid formatting data."]}) from None
     return Comment(
         **{field: data.get(field, "") for field in ("username", "email", "homepage", "text")},
         parent_id=reference_id(data.get("parent_id")),
         quoted_comment_id=reference_id(data.get("quoted_comment_id")),
+        entities=entities,
     )
 
 
@@ -31,3 +36,4 @@ def serialize_errors(error):
     for field, messages in getattr(error, "message_dict", {"__all__": error.messages}).items():
         result.setdefault(field if field in fields else "__all__", []).extend(messages)
     return {"errors": result}
+import json

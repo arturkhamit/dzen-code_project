@@ -3,32 +3,41 @@ from html import escape
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
-from comments.validators.markup import parse_comment_text
+from comments.validators.entities import utf16_boundaries, validate_entities
 
 
-def render_comment_text(value):
+def render_comment_text(value, entities=None):
     try:
-        root = parse_comment_text(value)
+        entities = validate_entities(value, [] if entities is None else entities)
     except ValidationError:
         # Older rows or bulk writes may bypass model validation. Escape them.
         return mark_safe(escape(str(value or "")))
 
-    def render(node):
-        content = escape(node.text or "")
-        for child in node:
-            attributes = "".join(f' {key}="{escape(val, quote=True)}"' for key, val in child.attrib.items())
-            if child.tag == "a":
-                attributes += ' rel="nofollow ugc noopener noreferrer"'
-            content += f"<{child.tag}{attributes}>{render(child)}</{child.tag}>"
-            content += escape(child.tail or "")
-        return content
-
-    # Only generated, allowlisted markup is marked safe, never the submitted text.
-    return mark_safe(render(root))
+    positions, output, stack, cursor = utf16_boundaries(value), [], [], 0
+    tags = {"bold": "strong", "italic": "i", "code": "code", "text_link": "a"}
+    for entity in entities:
+        start, end = positions[entity["offset"]], positions[entity["offset"] + entity["length"]]
+        while stack and stack[-1][0] <= start:
+            stop, tag = stack.pop()
+            output.append(escape(value[cursor:stop]) + f"</{tag}>")
+            cursor = stop
+        tag, attributes = tags[entity["type"]], ""
+        if tag == "a":
+            attributes = f' href="{escape(entity["url"], quote=True)}"'
+            if "title" in entity:
+                attributes += f' title="{escape(entity["title"], quote=True)}"'
+            attributes += ' rel="nofollow ugc noopener noreferrer"'
+        output.append(escape(value[cursor:start]) + f"<{tag}{attributes}>")
+        cursor = start
+        stack.append((end, tag))
+    while stack:
+        end, tag = stack.pop()
+        output.append(escape(value[cursor:end]) + f"</{tag}>")
+        cursor = end
+    output.append(escape(value[cursor:]))
+    # Only generated markup is marked safe; the message itself is always escaped.
+    return mark_safe("".join(output))
 
 
 def comment_plain_text(value):
-    try:
-        return "".join(parse_comment_text(value).itertext())
-    except ValidationError:
-        return str(value or "")
+    return str(value or "")

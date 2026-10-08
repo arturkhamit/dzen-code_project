@@ -8,12 +8,29 @@ dependencies = [
     "django>=6.1.1",
     "docker>=7.2.0",
     "dotenv>=0.9.9",
+    "pillow>=12.0.0",
     "psycopg>=3.3.6",
     "websockets>=17.2",
 ]
 
 [project.scripts]
 dzen-code = "dzen_code:main"
+
+[dependency-groups]
+test = [
+    "pytest>=8.4",
+    "pytest-django>=4.11",
+    "playwright>=1.51",
+    "html5lib>=1.1",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+django_find_project = false
+pythonpath = [".", "SPA"]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
+markers = ["browser: Chromium interaction tests using mocked API and CAPTCHA responses"]
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
