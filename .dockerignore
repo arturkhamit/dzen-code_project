@@ -1,0 +1,17 @@
+.git
+.idea
+.agents
+.codex
+.aws
+.venv
+.env
+.env.*
+temp
+tests
+.pytest_cache
+**/__pycache__
+**/*.pyc
+**/node_modules
+SPA/media
+SPA/staticfiles
+SPA/comments/static/comments/dist
