@@ -114,3 +114,11 @@ Store dated copies securely off the server. Database and uploads use persistent
 Docker volumes; `docker compose down` keeps them, but `down --volumes` deletes them.
 If an upgrade reports duplicate account emails, give those accounts distinct
 addresses before retrying the migration.
+
+
+## Database Schema
+
+MySQL model can be found in `db_models/MySQL_model.mwb`, which can be opened with MySQL Workbench.
+
+If you want to work with PostgreSQL, which is an original version, you can `db_models/schema-postgresql.sql`, which is a plain SQL script,
+containing the schema definition.
