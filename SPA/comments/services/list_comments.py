@@ -1,12 +1,14 @@
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 
-from comments.models import Comment
+from comments.models import Comment, CommentVote
 
 
 PAGE_SIZE = 25
 SORT_FIELDS = {
     "newest": ("-created_at", "-id"),
+    "popular": ("-vote_count", "-created_at", "-id"),
     "oldest": ("created_at", "id"),
     "username_asc": ("username", "-created_at", "-id"),
     "username_desc": ("-username", "-created_at", "-id"),
@@ -36,12 +38,15 @@ def comment_page_number(comment_id, sort="newest"):
     return Comment.objects.filter(parent__isnull=True).filter(preceding).count() // PAGE_SIZE + 1
 
 
-def get_comment_page(number=1, sort="newest"):
+def get_comment_page(number=1, sort="newest", *, user=None):
     # Never pass request values directly to order_by or SQL. Roots are paginated
     # separately so replies stay together; render data is built by the serializer.
 
     ordering = SORT_FIELDS.get(sort, SORT_FIELDS["newest"])
     queryset = Comment.objects.select_related("quoted_comment", "attachment")
+    if user is not None:
+        votes = CommentVote.objects.filter(comment_id=OuterRef("pk"), user=user).values("value")[:1]
+        queryset = queryset.annotate(user_vote=Coalesce(Subquery(votes), 0, output_field=IntegerField()))
     roots = queryset.filter(parent__isnull=True).order_by(*ordering)
     page = Paginator(roots, PAGE_SIZE).get_page(number)
     page.object_list = list(page.object_list)

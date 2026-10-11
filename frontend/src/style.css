@@ -38,6 +38,8 @@ thead { background: #fafbfc; }
 [data-username] { font-weight: 700; }
 .actions { display: flex; align-items: center; gap: 5px; margin-left: auto; color: var(--muted); font-size: .8rem; }
 .actions button { padding: 2px 6px; border: 0; background: transparent; }
+.vote-buttons { display: flex; align-items: center; gap: 2px; }
+.vote-buttons [aria-pressed="true"] { color: #244f79; background: #dce8f4; }
 .parent { display: inline-block; margin: 6px 12px 0; font-size: .75rem; }
 blockquote { margin: 10px 12px 0; padding: 5px 10px; border-left: 2px solid #a8bcd0; background: #f8fafc; font-size: .8rem; }
 .quote-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
@@ -51,7 +53,11 @@ code { background: var(--soft); border-radius: 3px; padding: 2px 4px; }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
 .fields label:last-child { grid-column: 1 / -1; }
 label { display: block; font-size: .85rem; }
-.composer input:not([type="hidden"]), textarea { display: block; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 5px; margin: 5px 0; }
+.composer input:not([type="hidden"]), .account-form input, textarea { display: block; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 5px; margin: 5px 0; }
+.account-panel { margin-bottom: 20px; }
+.account-panel > p { padding: 0 16px; }
+.account-form { padding: 0 16px 16px; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 textarea { resize: vertical; }
 .format-toolbar { margin: 6px 0; }
 .format-toolbar [aria-pressed="true"] { background: #e5eef7; border-color: #88a9c8; }

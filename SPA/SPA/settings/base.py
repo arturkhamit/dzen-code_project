@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # local apps
+    'accounts',
     'comments',
 ]
 
@@ -68,6 +69,25 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'SPA.wsgi.application'
+
+# Sessions survive cache eviction because Django also keeps a database copy.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
+        "KEY_PREFIX": "comments",
+        "OPTIONS": {"socket_connect_timeout": 2, "socket_timeout": 2},
+    },
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_COOKIE_AGE = 7 * 24 * 60 * 60
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+JWT_ACCESS_SECONDS = 5 * 60
+JWT_ISSUER = "dzen-code"
+JWT_AUDIENCE = "comments-api"
+LOGIN_ATTEMPT_LIMIT = 5
+LOGIN_ATTEMPT_WINDOW = 5 * 60
 
 
 # Database
@@ -123,4 +143,3 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles'))
 MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
-

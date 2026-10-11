@@ -9,10 +9,12 @@
 </head>
 <body>
   {{ page_data|json_script:"comments-data" }}
+  {{ auth_urls|json_script:"auth-urls" }}
   <div id="comments-app" data-list-url="{{ list_url }}" data-create-url="{{ form_action }}"
-       data-site-key="{{ recaptcha_site_key }}" data-csrf-token="{{ csrf_token }}" data-sort="{{ sort|default:'newest' }}"></div>
+       data-site-key="{{ recaptcha_site_key }}" data-captcha-required="{{ captcha_required|yesno:'true,false' }}"
+       data-csrf-token="{{ csrf_token }}" data-sort="{{ sort|default:'newest' }}"></div>
   <noscript>Please enable JavaScript to join the discussion.</noscript>
-  {% if recaptcha_site_key %}
+  {% if recaptcha_site_key and captcha_required %}
   <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key|urlencode }}" async defer></script>
   {% endif %}
   <script type="module" src="{% static 'comments/dist/comments.js' %}"></script>

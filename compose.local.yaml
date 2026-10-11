@@ -1,0 +1,6 @@
+services:
+  app:
+    environment:
+      DJANGO_SETTINGS_MODULE: SPA.settings.local
+      DEBUG: "1"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,[::1]"

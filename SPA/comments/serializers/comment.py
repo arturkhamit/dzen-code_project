@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
+from django.urls import reverse
 
 from .attachment import serialize_attachment
 from .markup import comment_plain_text, render_comment_text
@@ -25,6 +26,8 @@ def serialize_comment(comment, *, depth=0):
         "avatar_url": display_url(comment.avatar_url),
         "created_at": comment.created_at.isoformat(),
         "vote_count": comment.vote_count,
+        "user_vote": getattr(comment, "user_vote", 0),
+        "vote_url": reverse("comments:vote", args=[comment.pk]),
         "parent_id": comment.parent_id,
         "depth": depth,
         "text": comment.text,

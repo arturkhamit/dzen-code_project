@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import CommentCard from './CommentCard.vue';
 import CommentEditor from './CommentEditor.vue';
 import { renderMessage } from './lib/entities.js';
@@ -7,13 +7,15 @@ import { validateFile } from './lib/files.js';
 import { safeUrl } from './lib/urls.js';
 import { captchaToken } from './lib/captcha.js';
 
-const props = defineProps({ createUrl: String, siteKey: String, csrfToken: String, sort: String, reload: Function });
+const props = defineProps({ createUrl: String, siteKey: String, captchaRequired: Boolean, auth: Object, sort: String, reload: Function });
 defineEmits(['open']);
 const form = ref(), textInput = ref();
 const draft = reactive({ username: '', email: '', homepage: '', text: '' });
 const reply = ref(null), quote = ref(null), preview = ref(null), file = ref(null);
 const errors = ref({}), status = ref(''), posting = ref(false), entities = ref([]);
 const fields = [['username', 'User Name', 'text', 80], ['email', 'E-mail', 'email', 254], ['homepage', 'Home page', 'url', 2048]];
+const identityErrors = computed(() => fields.flatMap(([name]) => errors.value[name] || []).join(' '));
+watch(() => props.auth.state.user, () => { preview.value = null; });
 
 function select(comment, kind) {
   (kind === 'reply' ? reply : quote).value = comment;
@@ -27,7 +29,7 @@ function showPreview() {
   preview.value = null;
   try {
     const html = renderMessage(draft.text, entities.value);
-    if (form.value.reportValidity()) preview.value = { ...draft, rendered_text: html, created_at: new Date().toISOString(), quoted_comment: quote.value };
+    if (form.value.reportValidity()) preview.value = { ...draft, ...props.auth.state.user, rendered_text: html, created_at: new Date().toISOString(), quoted_comment: quote.value };
   } catch (error) { errors.value.text = error.message; }
 }
 
@@ -48,7 +50,7 @@ async function chooseFile(event) {
 }
 
 async function submit() {
-  if (posting.value) return;
+  if (posting.value || !props.auth.state.ready || props.auth.state.busy) return;
   errors.value = {};
   try { renderMessage(draft.text, entities.value); }
   catch (error) { errors.value.text = error.message; return; }
@@ -62,18 +64,18 @@ async function submit() {
     const data = new FormData(form.value);
     data.set('text', draft.text);
     data.set('entities', JSON.stringify(entities.value));
-    status.value = 'Verifying…';
-    try { data.set('g-recaptcha-response', await captchaToken(props.siteKey)); }
-    catch {
-      errors.value.recaptcha = 'Verification is unavailable. Please try again.';
-      status.value = '';
-      return;
+    if (props.captchaRequired) {
+      status.value = 'Verifying…';
+      try { data.set('g-recaptcha-response', await captchaToken(props.siteKey)); }
+      catch {
+        errors.value.recaptcha = 'Verification is unavailable. Please try again.';
+        status.value = '';
+        return;
+      }
     }
     data.set('sort', props.sort);
     status.value = 'Posting comment…';
-    const response = await fetch(safeUrl(props.createUrl), {
-      method: 'POST', body: data, headers: { 'X-CSRFToken': props.csrfToken, Accept: 'application/json' },
-    });
+    const response = await props.auth.fetch(props.createUrl, { method: 'POST', body: data });
     saved = response.ok;
     const result = await response.json();
     if (!saved) { errors.value = result.errors || { __all__: 'Your comment could not be posted.' }; status.value = 'Please check your comment.'; return; }
@@ -100,7 +102,9 @@ async function submit() {
     <p v-if="reply">Replying to {{ reply.username }} <button type="button" data-cancel-reply @click="reply = null; preview = null">Cancel reply</button></p>
     <p v-if="quote">Quoting {{ quote.username }} <button type="button" data-cancel-quote @click="quote = null; preview = null">Remove quote</button></p>
     <p class="error" role="alert">{{ [].concat(errors.__all__ || []).join(' ') }}</p>
-    <div class="fields">
+    <p v-if="auth.state.user" data-posting-as>Posting as <strong>{{ auth.state.user.username }}</strong></p>
+    <p v-if="auth.state.user && identityErrors" class="error" role="alert">{{ identityErrors }} Check your details using Account above.</p>
+    <div v-if="!auth.state.user" class="fields">
       <label v-for="[name, label, type, limit] in fields" :key="name" :for="`id_${name}`">
         {{ label }} {{ name === 'homepage' ? '' : '*' }}
         <input :id="`id_${name}`" v-model="draft[name]" :name="name" :type="type" :maxlength="limit" :required="name !== 'homepage'"
@@ -115,10 +119,10 @@ async function submit() {
     <small>JPG, GIF or PNG up to 10 MB, resized to 320 × 240. UTF-8 TXT up to 100 KB.</small>
     <p id="attachment-errors" class="error">{{ [].concat(errors.attachment || []).join(' ') }}</p>
     <button v-if="file" type="button" data-preview-file @click="$emit('open', { upload: file, original_name: file.name, kind: /\.txt$/i.test(file.name) ? 'text' : 'image' })">View selected file</button>
-    <p v-if="!siteKey">Verification is currently unavailable. Please try again later.</p>
+    <p v-if="captchaRequired && !siteKey">Verification is currently unavailable. Please try again later.</p>
     <p id="recaptcha-errors" class="error" role="alert">{{ [].concat(errors.recaptcha || []).join(' ') }}</p>
-    <input type="hidden" name="csrfmiddlewaretoken" :value="csrfToken"><input type="hidden" name="parent_id" :value="reply?.pk || ''"><input type="hidden" name="quoted_comment_id" :value="quote?.pk || ''">
-    <div class="buttons"><button class="primary" data-submit :disabled="posting || !createUrl || !siteKey">Post comment</button><button type="button" data-preview @click="showPreview">Preview</button></div>
+    <input type="hidden" name="csrfmiddlewaretoken" :value="auth.state.csrfToken"><input type="hidden" name="parent_id" :value="reply?.pk || ''"><input type="hidden" name="quoted_comment_id" :value="quote?.pk || ''">
+    <div class="buttons"><button class="primary" data-submit :disabled="posting || !auth.state.ready || auth.state.busy || !createUrl || (captchaRequired && !siteKey)">Post comment</button><button type="button" data-preview @click="showPreview">Preview</button></div>
     <p data-form-status role="status">{{ status }}</p>
     <section v-if="preview" id="comment-preview"><h3>Preview</h3><CommentCard :comment="preview" :sort="sort" preview /></section>
   </form>

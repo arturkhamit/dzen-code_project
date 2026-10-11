@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 
 from comments.models import Comment
 from comments.validators.entities import validate_entities
+from .comment_identity import validate_guest_identity
 
 
 def validate_comment(comment):
@@ -12,6 +13,8 @@ def validate_comment(comment):
     # Built-in validation handles declared fields, uniqueness and DB constraints.
     # These additional rules depend on other rows and belong to the write service.
     comment.full_clean()
+    if comment._state.adding and comment.user_id is None:
+        validate_guest_identity(comment)
     errors = {}
     if not comment._state.adding:
         original = Comment.objects.filter(pk=comment.pk).values("parent_id").first()

@@ -1,7 +1,7 @@
 <script setup>
 
-defineProps({ comment: Object, preview: Boolean, sort: { type: String, default: 'newest' } });
-defineEmits(['reply', 'quote', 'open']);
+defineProps({ comment: Object, preview: Boolean, canVote: Boolean, voting: Boolean, sort: { type: String, default: 'newest' } });
+defineEmits(['reply', 'quote', 'open', 'vote']);
 </script>
 
 <template>
@@ -15,7 +15,11 @@ defineEmits(['reply', 'quote', 'open']);
       <div v-if="!preview" class="actions">
         <button type="button" data-reply-to :aria-label="`Reply to ${comment.username}`" @click="$emit('reply', comment)">↩</button>
         <button type="button" data-quote :aria-label="`Quote ${comment.username}`" @click="$emit('quote', comment)">❝</button>
-        <span class="comment__votes" :aria-label="`${comment.vote_count} votes`">▴ {{ comment.vote_count }}</span>
+        <div class="vote-buttons" :title="canVote ? 'Click your selected vote to remove it' : 'Sign in to vote'" :aria-busy="voting">
+          <button type="button" aria-label="Upvote" :aria-pressed="comment.user_vote === 1" :disabled="!canVote || voting" @click="$emit('vote', 1)">▴</button>
+          <span class="comment__votes" :aria-label="`${comment.vote_count} votes`" aria-live="polite">{{ comment.vote_count }}</span>
+          <button type="button" aria-label="Downvote" :aria-pressed="comment.user_vote === -1" :disabled="!canVote || voting" @click="$emit('vote', -1)">▾</button>
+        </div>
         <a :href="`#comment-${comment.pk}`" aria-label="Link to comment">#</a>
       </div>
     </header>

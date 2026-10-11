@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ValidationError
 
 from comments.models import Comment
@@ -36,4 +38,3 @@ def serialize_errors(error):
     for field, messages in getattr(error, "message_dict", {"__all__": error.messages}).items():
         result.setdefault(field if field in fields else "__all__", []).extend(messages)
     return {"errors": result}
-import json

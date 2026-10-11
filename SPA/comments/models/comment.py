@@ -39,9 +39,8 @@ class Comment(models.Model):
     entities = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(default=timezone.now, db_index=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
-    # Expose this as read-only in a future serializer. Voting needs an authenticated
-    # identity and an atomic update; a posted count is never a trusted vote.
-    vote_count = models.IntegerField(default=0)
+    # Only the voting service changes this total, under a row lock.
+    vote_count = models.IntegerField(default=0, editable=False)
 
     class Meta:
         verbose_name = "Comment"

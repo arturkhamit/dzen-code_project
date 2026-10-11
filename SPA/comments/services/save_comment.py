@@ -25,7 +25,9 @@ def save_comment(comment, *, upload=None):
         with transaction.atomic(durable=True):
             if not was_adding:
                 # Lock before checking the stored parent and writing an edit.
-                Comment.objects.select_for_update().get(pk=comment.pk)
+                stored = Comment.objects.select_for_update().get(pk=comment.pk)
+                # An editor may have loaded this instance before a vote arrived.
+                comment.vote_count = stored.vote_count
             validate_comment(comment)
             comment.save()
             if attachment is not None:
