@@ -9,8 +9,12 @@ Hosted version: [dzen-code-comments.online](https://dzen-code-comments.online/).
 ## How it works
 
 - **Vue** renders the interface and sends HTTP requests to **Django**, served by Uvicorn.
+- **WebSockets** notify open pages when comments, replies, or votes change. Vue
+  refreshes the current page without clearing drafts or changing the selected sort.
+  Connections reconnect automatically and fetch any missed updates.
 - **PostgreSQL** stores accounts, comments, votes, and a database copy of sessions.
-- **Redis** caches sessions and counts failed login attempts. Sessions last seven
+- **Redis** distributes WebSocket notifications between workers, caches sessions,
+  and counts failed login attempts. Sessions last seven
   days; five failed login attempts block that username until the five-minute counter expires.
 - Login issues a five-minute **JWT**, kept in browser memory and renewed using an
   HttpOnly session cookie. Signed-in comments use the account's saved identity.
@@ -47,6 +51,21 @@ loopback; PostgreSQL and Redis stay inside Docker. Nginx and Django use port
 
 Docker builds Vue; the app runs migrations and collects static files on startup.
 Local mode enables `DEBUG` and skips CAPTCHA.
+
+To test live updates, open the discussion in two tabs and post a comment or vote
+in one: the other updates automatically. `/ws/comments/` shares the normal site
+port through Nginx and Caddy; no extra public port or Caddy route is needed.
+For development outside Docker, use Uvicorn (plain Django `runserver` does not
+serve this WebSocket endpoint), with PostgreSQL and Redis available:
+
+```bash
+cd SPA
+uv run uvicorn SPA.asgi:application --reload --port 8002
+```
+
+Build Vue with `npm run build --prefix frontend` from the project root. Uvicorn
+does not serve development static files; use the Docker/Nginx setup above to
+test the complete UI, or arrange a separate static-file server.
 
 ## Deploy to the server
 

@@ -6,6 +6,7 @@ import { renderMessage } from './lib/entities.js';
 import { validateFile } from './lib/files.js';
 import { safeUrl } from './lib/urls.js';
 import { captchaToken } from './lib/captcha.js';
+import { formatHints, updateFieldError, usernamePattern } from './lib/validation.js';
 
 const props = defineProps({ createUrl: String, siteKey: String, captchaRequired: Boolean, auth: Object, sort: String, reload: Function });
 defineEmits(['open']);
@@ -108,8 +109,11 @@ async function submit() {
       <label v-for="[name, label, type, limit] in fields" :key="name" :for="`id_${name}`">
         {{ label }} {{ name === 'homepage' ? '' : '*' }}
         <input :id="`id_${name}`" v-model="draft[name]" :name="name" :type="type" :maxlength="limit" :required="name !== 'homepage'"
-               :pattern="name === 'username' ? '[A-Za-z0-9]+' : name === 'homepage' ? 'https?://.+' : undefined" :aria-describedby="`${name}-errors`">
-        <span :id="`${name}-errors`" class="error">{{ [].concat(errors[name] || []).join(' ') }}</span>
+               :pattern="name === 'username' ? usernamePattern : name === 'homepage' ? 'https?://.+' : undefined"
+               :aria-describedby="`${name}-hint ${name}-errors`" :aria-invalid="!!errors[name]?.length"
+               @invalid="updateFieldError($event, errors)" @input="updateFieldError($event, errors)">
+        <small :id="`${name}-hint`">{{ formatHints[name] }}</small>
+        <span :id="`${name}-errors`" class="error" role="alert">{{ [].concat(errors[name] || []).join(' ') }}</span>
       </label>
     </div>
     <label id="text-label">Text *</label>

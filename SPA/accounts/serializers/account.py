@@ -14,7 +14,10 @@ class ProfileInput(forms.Form):
 
 
 class RegistrationInput(ProfileInput):
-    username = forms.RegexField(r"\A[A-Za-z0-9]+\Z", max_length=80)
+    username = forms.RegexField(
+        r"\A[A-Za-z0-9_-]+\Z", max_length=80,
+        error_messages={"invalid": "Use Latin letters (A–Z, a–z), digits (0–9), underscores (_) or dashes (-), with no spaces. Example: Alex_123-test."},
+    )
     password1 = forms.CharField(strip=False, max_length=128)
     password2 = forms.CharField(strip=False, max_length=128)
 

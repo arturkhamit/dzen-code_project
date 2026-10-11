@@ -1,8 +1,10 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
+import { formatHints, updateFieldError, usernamePattern } from './lib/validation.js';
 
 const props = defineProps({ auth: Object });
 const mode = ref(''), error = ref(''), status = ref(''), draft = reactive({});
+const fieldErrors = ref({});
 const labels = { login: 'Sign in', register: 'Create account', me: 'Save profile', password: 'Change password' };
 const fields = {
   username: ['User Name', 'text', 'username', 80], email: ['E-mail', 'email', 'email', 254],
@@ -24,18 +26,23 @@ function open(next) {
   Object.assign(draft, { email: props.auth.state.user?.email || '', homepage: props.auth.state.user?.homepage || '' });
   mode.value = next;
   error.value = status.value = '';
+  fieldErrors.value = {};
 }
 watch(() => props.auth.state.user?.id, () => { mode.value = ''; });
 
 async function submit(name = mode.value) {
   if (props.auth.state.busy) return;
   error.value = status.value = '';
+  fieldErrors.value = {};
   try {
     const data = name === 'logout' ? null : Object.fromEntries(visibleFields.value.map(key => [key, draft[key] || '']));
     await props.auth.action(name, data);
     open('');
     status.value = ({ login: 'Signed in.', register: 'Your account is ready.', me: 'Profile saved.', password: 'Password changed.', logout: 'Signed out.' })[name];
-  } catch (failure) { error.value = failure.message; }
+  } catch (failure) {
+    fieldErrors.value = failure.errors || {};
+    error.value = failure.message;
+  }
 }
 </script>
 
@@ -60,7 +67,7 @@ async function submit(name = mode.value) {
     <p v-if="auth.state.error" class="error" role="alert">{{ auth.state.error }}</p>
     <p class="error" role="alert">{{ error }}</p>
     <p role="status">{{ status }}</p>
-    <form v-if="mode" class="account-form" @submit.prevent="submit()">
+    <form v-if="mode" :key="mode" class="account-form" @submit.prevent="submit()">
       <h2>{{ labels[mode] }}</h2>
       <div class="fields">
         <label v-for="name in visibleFields" :key="name" :for="`account_${name}`">
@@ -68,7 +75,11 @@ async function submit(name = mode.value) {
           <input :id="`account_${name}`" v-model="draft[name]" :name="name" :type="fields[name][1]"
                  :autocomplete="fields[name][2]" :maxlength="name === 'username' && mode === 'login' ? 150 : fields[name][3]"
                  :required="name !== 'homepage'" :disabled="auth.state.busy"
-                 :pattern="name === 'username' && mode === 'register' ? '[A-Za-z0-9]+' : name === 'homepage' ? 'https?://.+' : undefined">
+                 :aria-describedby="`account_${name}-hint account_${name}-errors`" :aria-invalid="!!fieldErrors[name]?.length"
+                 @invalid="updateFieldError($event, fieldErrors)" @input="updateFieldError($event, fieldErrors)"
+                 :pattern="name === 'username' && mode === 'register' ? usernamePattern : name === 'homepage' ? 'https?://.+' : undefined">
+          <small :id="`account_${name}-hint`">{{ name === 'username' && mode !== 'register' ? '' : formatHints[name] }}</small>
+          <span :id="`account_${name}-errors`" class="error" role="alert">{{ [].concat(fieldErrors[name] || []).join(' ') }}</span>
         </label>
       </div>
       <div class="buttons">

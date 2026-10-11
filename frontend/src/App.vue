@@ -6,6 +6,7 @@ import FileViewer from './FileViewer.vue';
 import AccountPanel from './AccountPanel.vue';
 import { createAuth } from './lib/auth.js';
 import { safeUrl } from './lib/urls.js';
+import { connectLiveUpdates } from './lib/liveUpdates.js';
 
 const props = defineProps({ initial: Object, listUrl: String, createUrl: String, siteKey: String, captchaRequired: Boolean, csrfToken: String, sort: String, authUrls: Object });
 const auth = createAuth(props.authUrls, props.csrfToken);
@@ -15,12 +16,12 @@ const voting = ref(new Set());
 const sorts = { newest: 'Newest first', popular: 'Most popular', oldest: 'Oldest first', username_asc: 'User Name A–Z', username_desc: 'User Name Z–A', email_asc: 'E-mail A–Z', email_desc: 'E-mail Z–A' };
 const columns = [['User Name', 'username_asc', 'username_desc'], ['E-mail', 'email_asc', 'email_desc'], ['Date added', 'oldest', 'newest']];
 const link = (number = 1, order = sort.value) => `${props.listUrl}?${new URLSearchParams({ page: number, sort: order })}`;
-let request;
+let request, stopLiveUpdates;
 
-async function load(address, push = true, syncSort = true) {
+async function load(address, push = true, syncSort = true, silent = false) {
   request?.abort();
   const controller = request = new AbortController();
-  status.value = 'Loading comments…';
+  if (!silent) status.value = 'Loading comments…';
   try {
     const url = safeUrl(address);
     const response = await auth.fetch(url, { signal: controller.signal });
@@ -31,13 +32,15 @@ async function load(address, push = true, syncSort = true) {
     page.value = data;
     if (syncSort) sort.value = url.searchParams.get('sort') || 'newest';
     if (push) history.pushState({}, '', url);
-    status.value = 'Comments updated.';
+    if (!silent) status.value = 'Comments updated.';
     await nextTick();
-    if (url.hash) document.getElementById(url.hash.slice(1))?.scrollIntoView({ block: 'center' });
+    if (!silent && url.hash) document.getElementById(url.hash.slice(1))?.scrollIntoView({ block: 'center' });
     return true;
   } catch (error) {
-    if (error.name !== 'AbortError') status.value = error.message;
+    if (!silent && error.name !== 'AbortError') status.value = error.message;
     return false;
+  } finally {
+    if (controller === request) request = undefined;
   }
 }
 async function vote(comment, direction) {
@@ -67,9 +70,13 @@ watch(() => auth.state.user?.id, () => {
 window.addEventListener('popstate', back);
 onMounted(() => {
   auth.restore();
+  stopLiveUpdates = connectLiveUpdates(async () => {
+    if (request) return false;
+    await load(location.href, false, false, true);
+  });
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' });
 });
-onUnmounted(() => { window.removeEventListener('popstate', back); request?.abort(); });
+onUnmounted(() => { stopLiveUpdates?.(); window.removeEventListener('popstate', back); request?.abort(); });
 </script>
 
 <template>

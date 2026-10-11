@@ -5,7 +5,7 @@ from django.db import models
 class CommentAuthor(models.Model):
     username = models.CharField(
         max_length=80,
-        validators=[RegexValidator(r"\A[A-Za-z0-9]+\Z", "Use Latin letters and digits only.")],
+        validators=[RegexValidator(r"\A[A-Za-z0-9_-]+\Z", "Use Latin letters, digits, underscores (_) or dashes (-), with no spaces.")],
     )
     email = models.EmailField(max_length=254)
     homepage = models.URLField(

@@ -3,6 +3,7 @@ from django.db import transaction
 
 from accounts.services.tokens import AuthenticationError
 from comments.models import Comment, CommentVote
+from .notifications import notify_comments_changed
 
 
 @transaction.atomic
@@ -23,4 +24,5 @@ def set_vote(comment_id, user, value):
             CommentVote.objects.update_or_create(comment=comment, user=user, defaults={"value": value})
         comment.vote_count += value - previous
         comment.save(update_fields=["vote_count"])
+        notify_comments_changed()
     return comment

@@ -7,6 +7,7 @@ from comments.models import Comment
 
 from .prepare_attachment import prepare_attachment
 from .validate_comment import validate_comment
+from .notifications import notify_comments_changed
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ def save_comment(comment, *, upload=None):
                 except ValidationError as error:
                     raise ValidationError({"attachment": error.messages}) from error
                 attachment.save()
+            notify_comments_changed()
     except Exception:
         # DB rollback does not roll back storage. Delete only the new file written
         # by this call, retaining the original exception if cleanup also fails.

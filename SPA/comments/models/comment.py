@@ -19,7 +19,7 @@ class Comment(models.Model):
     # changes or is removed. The author relation can group anonymous submissions.
     username = models.CharField(
         max_length=80, db_index=True,
-        validators=[RegexValidator(r"\A[A-Za-z0-9]+\Z", "Use Latin letters and digits only.")],
+        validators=[RegexValidator(r"\A[A-Za-z0-9_-]+\Z", "Use Latin letters, digits, underscores (_) or dashes (-), with no spaces.")],
     )
     email = models.EmailField(max_length=254, db_index=True)
     homepage = models.URLField(
